@@ -2,7 +2,6 @@ import pytest
 from receipt_reader import parser
 
 
-@pytest.mark.xfail(raises=NotImplementedError, strict=False, reason="Parser not implemented yet")
 @pytest.mark.parametrize(
     "path", [
         "tests/toom.png",
