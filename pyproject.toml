@@ -12,6 +12,7 @@ Pillow = "*"
 pydantic = "^1.10"
 sentencepiece = "*"
 protobuf = "*"
+Flask = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
