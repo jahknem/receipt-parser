@@ -1,0 +1,30 @@
+{
+  "invoice_id": "string",
+  "merchant": {
+    "name": "string",
+    "address": "string",
+    "phone": "string|null"
+  },
+  "timestamp": "YYYY-MM-DDThh:mm:ss",
+  "currency": "EUR",
+  "items": [
+    {
+      "sku_or_ean": "string|null",
+      "description": "string",
+      "qty": 1,
+      "unit_price": 0.00,
+      "total_price": 0.00,
+      "vat_rate": 19,
+      "confidence": 1.0,
+      "raw_line": "string|null"
+    }
+  ],
+  "totals": {
+    "gross": 0.00,
+    "payment_method": "string"
+  },
+  "meta": {
+    "source_image": "string", 
+    "notes": "string|null"
+  }
+}

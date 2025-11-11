@@ -1,0 +1,110 @@
+{
+  "invoice_id": "rewe-2025-08-08-1524",
+  "merchant": {
+    "name": "REWE – Im Krämer",
+    "address": "61169 Friedberg",
+    "phone": "06031-1667168"
+  },
+  "timestamp": "2025-08-08T15:24:12",
+  "currency": "EUR",
+  "items": [
+    {
+      "sku_or_ean": null,
+      "description": "Maki Gurke (X01 – Eat Happy)",
+      "qty": 1,
+      "unit_price": 3.99,
+      "total_price": 3.99,
+      "vat_rate": 7,
+      "confidence": 0.98,
+      "raw_line": "MAKI GURKE X01 3,99 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Maki Avocado (X01 – Eat Happy)",
+      "qty": 1,
+      "unit_price": 4.49,
+      "total_price": 4.49,
+      "vat_rate": 7,
+      "confidence": 0.98,
+      "raw_line": "MAKI AVOCADO X01 4,49 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Bio Eier (Kl. M–L)",
+      "qty": 1,
+      "unit_price": 4.99,
+      "total_price": 4.99,
+      "vat_rate": 7,
+      "confidence": 0.6,
+      "raw_line": "BIO EI KL. M-L 4,99 B (fuzzy)"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Bio Crème Fraîche",
+      "qty": 3,
+      "unit_price": 1.19,
+      "total_price": 3.57,
+      "vat_rate": 7,
+      "confidence": 0.9,
+      "raw_line": "3 Stk x 1,19 = 3,57 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Dinkelmehl T630",
+      "qty": 1,
+      "unit_price": 1.39,
+      "total_price": 1.39,
+      "vat_rate": 7,
+      "confidence": 0.85,
+      "raw_line": "DINKELMEHL T630 1,39 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Blockschokolade",
+      "qty": 2,
+      "unit_price": 2.99,
+      "total_price": 5.98,
+      "vat_rate": 7,
+      "confidence": 0.85,
+      "raw_line": "2 Stk x 2,99 = 5,98 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Kidney Bohnen",
+      "qty": 2,
+      "unit_price": 2.39,
+      "total_price": 4.78,
+      "vat_rate": 7,
+      "confidence": 0.9,
+      "raw_line": "2 Stk x 2,39 = 4,78 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Bio Passata",
+      "qty": 1,
+      "unit_price": 1.59,
+      "total_price": 1.59,
+      "vat_rate": 7,
+      "confidence": 0.9,
+      "raw_line": "BIO PASSATA 1,59 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Schaschlikspieß",
+      "qty": 1,
+      "unit_price": 1.99,
+      "total_price": 1.99,
+      "vat_rate": 19,
+      "confidence": 0.6,
+      "raw_line": "…SPIESS 1,99 A (fuzzy)"
+    }
+  ],
+  "totals": {
+    "gross": 32.06,
+    "payment_method": "Debit Mastercard (contactless)"
+  },
+  "meta": {
+    "source_image": "tests/rewe.png",
+    "notes": "One 19% item at 1,99 matches the VAT block. Some lines are hard to read; confidence flags are lower."
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "invoice_id": "toom-2025-08-05-170907",
+  "merchant": {
+    "name": "toom Baumarkt GmbH",
+    "address": "Straßheimerstraße 27, 61169 Friedberg",
+    "phone": "06031/735130"
+  },
+  "timestamp": "2025-08-05T17:09:07",
+  "currency": "EUR",
+  "items": [
+    {
+      "sku_or_ean": "4002718777225",
+      "description": "Winkelleiste Kiefer",
+      "qty": 1,
+      "unit_price": 13.99,
+      "total_price": 13.99,
+      "vat_rate": 19,
+      "confidence": 0.98,
+      "raw_line": "4002718777225 Winkelleiste Kie 13.99 19"
+    },
+    {
+      "sku_or_ean": "4002718787125",
+      "description": "Winkelleiste",
+      "qty": 1,
+      "unit_price": 6.99,
+      "total_price": 6.99,
+      "vat_rate": 19,
+      "confidence": 0.98,
+      "raw_line": "4002718787125 Winkelleiste 6.99 19"
+    },
+    {
+      "sku_or_ean": "4051281464537",
+      "description": "Solarleuchte",
+      "qty": 3,
+      "unit_price": 2.99,
+      "total_price": 8.97,
+      "vat_rate": 19,
+      "confidence": 0.95,
+      "raw_line": "3.000 STK a 2.99 8.97 19"
+    },
+    {
+      "sku_or_ean": "4011261097018",
+      "description": "Carnivoren Sonne",
+      "qty": 1,
+      "unit_price": 5.99,
+      "total_price": 5.99,
+      "vat_rate": 7,
+      "confidence": 0.92,
+      "raw_line": "4011261097018 CARNIVOREN SONNE 5.99 7"
+    },
+    {
+      "sku_or_ean": "4337256024624",
+      "description": "Luftverbesserer",
+      "qty": 1,
+      "unit_price": 27.99,
+      "total_price": 27.99,
+      "vat_rate": 7,
+      "confidence": 0.92,
+      "raw_line": "4337256024624 LUFTVERBESSERER 27.99 7"
+    },
+    {
+      "sku_or_ean": "00000000400325",
+      "description": "Übertopf 18x15c",
+      "qty": 1,
+      "unit_price": 12.99,
+      "total_price": 12.99,
+      "vat_rate": 19,
+      "confidence": 0.96,
+      "raw_line": "00000000400325 Uebertopf 18x15c 12.99 19"
+    },
+    {
+      "sku_or_ean": "4002718778871",
+      "description": "Rundstab Kiefer",
+      "qty": 1,
+      "unit_price": 2.49,
+      "total_price": 2.49,
+      "vat_rate": 19,
+      "confidence": 0.98,
+      "raw_line": "4002718778871 Rundstab Kiefer 2.49 19"
+    }
+  ],
+  "totals": {
+    "gross": 79.41,
+    "payment_method": "VISA (contactless, Visa Debit)"
+  },
+  "meta": {
+    "source_image": "tests/toom.png",
+    "notes": null
+  }
+}

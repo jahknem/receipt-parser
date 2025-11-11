@@ -1,0 +1,60 @@
+{
+  "invoice_id": "rewe-2025-08-07-2102",
+  "merchant": {
+    "name": "REWE – Im Krämer",
+    "address": "61169 Friedberg",
+    "phone": "06031-1667168"
+  },
+  "timestamp": "2025-08-07T21:02:00",
+  "currency": "EUR",
+  "items": [
+    {
+      "sku_or_ean": null,
+      "description": "Kartoffeln VF Bio",
+      "qty": 1,
+      "unit_price": 2.29,
+      "total_price": 2.29,
+      "vat_rate": 7,
+      "confidence": 0.95,
+      "raw_line": "KART.VF.BIO 2,29 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Pizza Speciale",
+      "qty": 1,
+      "unit_price": 3.49,
+      "total_price": 3.49,
+      "vat_rate": 7,
+      "confidence": 0.98,
+      "raw_line": "PIZZA SPECIALE 3,49 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Pizza Vegetale",
+      "qty": 1,
+      "unit_price": 3.49,
+      "total_price": 3.49,
+      "vat_rate": 7,
+      "confidence": 0.98,
+      "raw_line": "PIZZA VEGETALE 3,49 B"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "TOIPA 3LG NATECO (non-food)",
+      "qty": 1,
+      "unit_price": 2.99,
+      "total_price": 2.99,
+      "vat_rate": 19,
+      "confidence": 0.85,
+      "raw_line": "TOIPA 3LG NATECO 2,99 A"
+    }
+  ],
+  "totals": {
+    "gross": 12.26,
+    "payment_method": "Cash (20.00 given, 7.74 change)"
+  },
+  "meta": {
+    "source_image": "tests/rewe2.png",
+    "notes": null
+  }
+}

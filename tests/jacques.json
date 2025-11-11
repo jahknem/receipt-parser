@@ -1,0 +1,30 @@
+{
+  "invoice_id": "jacques-2025-08-07-1748",
+  "merchant": {
+    "name": "Jacques’ Wein-Depot 230",
+    "address": "Frankfurter Straße 45, 61231 Bad Nauheim",
+    "phone": "06032/349338"
+  },
+  "timestamp": "2025-08-07T17:48:00",
+  "currency": "EUR",
+  "items": [
+    {
+      "sku_or_ean": "K2722",
+      "description": "Manufaktur Geiger, Pomaria",
+      "qty": 6,
+      "unit_price": 10.20,
+      "total_price": 61.20,
+      "vat_rate": 19,
+      "confidence": 0.7,
+      "raw_line": "“6x MANUFAKTUR GEIGER Pomaria” / Summe 61,20"
+    }
+  ],
+  "totals": {
+    "gross": 61.20,
+    "payment_method": "Visa Debit (contactless)"
+  },
+  "meta": {
+    "source_image": "tests/jacques.png",
+    "notes": "Quantity inferred from '6x' on the receipt; unit price derived from total/qty."
+  }
+}

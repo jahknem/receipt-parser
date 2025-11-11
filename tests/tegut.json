@@ -1,0 +1,50 @@
+{
+  "invoice_id": "tegut-2021-03-15",
+  "merchant": {
+    "name": "tegut",
+    "address": "Fauerbacher Str. 9, 61169 Friedberg",
+    "phone": "06031/1699770"
+  },
+  "timestamp": "2021-03-15T00:00:00",
+  "currency": "EUR",
+  "items": [
+    {
+      "sku_or_ean": null,
+      "description": "Tragetasche",
+      "qty": 1,
+      "unit_price": 0.20,
+      "total_price": 0.20,
+      "vat_rate": 19,
+      "confidence": 0.9,
+      "raw_line": "Tragetasche 0.20"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "BIO Mayka Chips",
+      "qty": 3,
+      "unit_price": 1.79,
+      "total_price": 5.37,
+      "vat_rate": 7,
+      "confidence": 0.96,
+      "raw_line": "BIO Mayka Chips 1.79 (three lines)"
+    },
+    {
+      "sku_or_ean": null,
+      "description": "Hitschler XXL Fruchtgummi",
+      "qty": 2,
+      "unit_price": 1.29,
+      "total_price": 2.58,
+      "vat_rate": 7,
+      "confidence": 0.94,
+      "raw_line": "Hitschler XXL Fruchtgummi 1.29 (two lines)"
+    }
+  ],
+  "totals": {
+    "gross": 8.15,
+    "payment_method": "SEPA-ELV"
+  },
+  "meta": {
+    "source_image": "tests/tegut.png",
+    "notes": null
+  }
+}

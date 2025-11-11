@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "receipt-parser"
+version = "0.0.0"
+description = "Receipt parsing helpers and fixtures for tests"
+authors = ["<you>"]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+
+[tool.poetry.dev-dependencies]
+pydantic = "^1.10"
+pytest = "^7.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
