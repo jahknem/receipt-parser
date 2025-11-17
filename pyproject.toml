@@ -15,6 +15,11 @@ protobuf = "*"
 fastapi = "*"
 uvicorn = "*"
 python-multipart = "*"
+prometheus-fastapi-instrumentator = "*"
+structlog = "*"
+opentelemetry-distro = "*"
+opentelemetry-instrumentation-fastapi = "*"
+pytest = "^9.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"

@@ -1,9 +1,13 @@
 import json
 import tempfile
+import uuid
+from contextlib import asynccontextmanager
 from decimal import Decimal
 from pathlib import Path
 from typing import Optional
 
+import structlog
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from fastapi import (
     BackgroundTasks,
     FastAPI,
@@ -20,13 +24,36 @@ from fastapi.responses import JSONResponse
 from receipt_reader.parser import parse_image
 
 from .jobs import Job, JobStore, timed
+from .logging import setup_logging
+from .metrics import instrumentator
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/jpg", "image/tiff"}
 UPLOADS_DIR = Path(tempfile.gettempdir()) / "receipt-parser"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup_logging()
+    FastAPIInstrumentor.instrument_app(app)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+instrumentator.instrument(app)
+instrumentator.expose(app)
 job_store = JobStore()
+log = structlog.get_logger()
+
+
+@app.middleware("http")
+async def add_correlation_id(request: Request, call_next):
+    correlation_id = str(uuid.uuid4())
+    request.state.correlation_id = correlation_id
+    log.bind(correlation_id=correlation_id)
+    response = await call_next(request)
+    response.headers["X-Correlation-ID"] = correlation_id
+    return response
 
 
 def _validate_content_type(upload: UploadFile) -> None:
@@ -95,6 +122,12 @@ async def upload_receipt(
     file: UploadFile = File(...),
     metadata: Optional[str] = Form(None),
 ):
+    log.info(
+        "upload_receipt",
+        filename=file.filename,
+        content_type=file.content_type,
+        metadata=metadata,
+    )
     job = job_store.create(metadata=_parse_metadata(metadata))
     stored_file = await _persist_upload(job, file)
     background_tasks.add_task(process_job, job.id, str(stored_file))
@@ -108,6 +141,7 @@ async def upload_receipt(
 
 @app.get("/receipts/{job_id}/status")
 def get_job_status(job_id: str):
+    log.info("get_job_status", job_id=job_id)
     job = job_store.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -116,6 +150,7 @@ def get_job_status(job_id: str):
 
 @app.get("/receipts/{job_id}")
 def get_job_result(job_id: str):
+    log.info("get_job_result", job_id=job_id)
     job = job_store.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
