@@ -1,5 +1,6 @@
 import json
 import tempfile
+from decimal import Decimal
 from pathlib import Path
 from typing import Optional
 
@@ -13,6 +14,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from receipt_reader.parser import parse_image
@@ -67,7 +69,7 @@ def _job_result_payload(job: Job) -> dict:
     return {
         "job_id": job.id,
         "status": "completed",
-        "parsed": job.result.dict(),
+        "parsed": jsonable_encoder(job.result, custom_encoder={Decimal: str}),
         "meta": {
             "processing_time_seconds": round(job.duration_seconds or 0.0, 3),
             "model_version": "donut-base-finetuned-cord-v2",
