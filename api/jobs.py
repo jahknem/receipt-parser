@@ -1,57 +1,70 @@
 from __future__ import annotations
-from typing import Dict, Literal, Optional
-from pydantic import BaseModel, Field
-import uuid
 
-from receipt_reader import parser
+from dataclasses import dataclass, field
+from threading import Lock
+from time import perf_counter
+from typing import Dict, Literal, Optional
+from uuid import uuid4
+
 from receipt_reader.types import Invoice
 
-JobId = str
-JobStatus = Literal["pending", "processing", "completed", "failed"]
+JobStatus = Literal["queued", "processing", "completed", "failed"]
 
 
-class Job(BaseModel):
-    id: JobId = Field(default_factory=lambda: str(uuid.uuid4()))
-    status: JobStatus = "pending"
+@dataclass
+class Job:
+    id: str = field(default_factory=lambda: str(uuid4()))
+    status: JobStatus = "queued"
     result: Optional[Invoice] = None
-    error_message: Optional[str] = None
-
-
-_jobs: Dict[JobId, Job] = {}
+    error: Optional[str] = None
+    metadata: Optional[dict] = None
+    duration_seconds: Optional[float] = None
 
 
 class JobStore:
-    def __init__(self, jobs: Dict[JobId, Job]):
-        self._jobs = jobs
+    def __init__(self) -> None:
+        self._jobs: Dict[str, Job] = {}
+        self._lock = Lock()
 
-    def create(self) -> Job:
-        job = Job()
-        self._jobs[job.id] = job
+    def create(self, *, metadata: Optional[dict] = None) -> Job:
+        job = Job(metadata=metadata)
+        with self._lock:
+            self._jobs[job.id] = job
         return job
 
-    def get(self, job_id: JobId) -> Optional[Job]:
-        return self._jobs.get(job_id)
+    def get(self, job_id: str) -> Optional[Job]:
+        with self._lock:
+            return self._jobs.get(job_id)
 
-    def update(self, job_id: JobId, status: JobStatus, result: Optional[Invoice] = None, error_message: Optional[str] = None):
-        if job := self._jobs.get(job_id):
-            job.status = status
-            job.result = result
-            job.error_message = error_message
+    def mark_processing(self, job_id: str) -> Job:
+        with self._lock:
+            job = self._jobs[job_id]
+            job.status = "processing"
+            return job
+
+    def mark_completed(self, job_id: str, *, invoice: Invoice, duration: float) -> Job:
+        with self._lock:
+            job = self._jobs[job_id]
+            job.status = "completed"
+            job.result = invoice
+            job.duration_seconds = duration
+            return job
+
+    def mark_failed(self, job_id: str, *, error: str) -> Job:
+        with self._lock:
+            job = self._jobs[job_id]
+            job.status = "failed"
+            job.error = error
+            return job
+
+    def reset(self) -> None:
+        with self._lock:
+            self._jobs.clear()
 
 
-def get_store() -> JobStore:
-    return JobStore(_jobs)
-
-
-async def process_job(job_id: JobId, file_path: str):
-    """
-    Processes a parsing job in the background.
-    """
-    store = get_store()
-    store.update(job_id, "processing")
-
-    try:
-        invoice = parser.parse_image(file_path)
-        store.update(job_id, "completed", result=invoice)
-    except Exception as e:
-        store.update(job_id, "failed", error_message=str(e))
+def timed(fn, *args, **kwargs):
+    start = perf_counter()
+    value = fn(*args, **kwargs)
+    duration = perf_counter() - start
+    return value, duration
+*** End of File
