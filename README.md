@@ -137,3 +137,22 @@ There are no specific configuration options for this API at the moment.
 
 -   **Model download issues:** The first time you run the application, it will download the pre-trained Donut model. If you experience issues, make sure you have a stable internet connection.
 -   **Incorrect parsing:** The accuracy of the parsing depends on the quality of the receipt image. Ensure the image is clear and well-lit for best results.
+
+## CI Checks
+
+This project uses GitHub Actions to run CI checks on every push and pull request. The CI workflow is defined in `.github/workflows/ci.yml`.
+
+The CI workflow performs the following checks:
+- Runs tests with `pytest`.
+
+### Running Checks Locally
+
+To run the CI checks locally, you can use the following commands:
+
+```bash
+# Install dependencies
+poetry install
+
+# Run tests
+poetry run pytest
+```
