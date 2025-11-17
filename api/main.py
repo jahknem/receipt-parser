@@ -9,9 +9,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
-    Query,
     Request,
-    Response,
     UploadFile,
     status,
 )
@@ -97,7 +95,6 @@ async def upload_receipt(
 ):
     job = job_store.create(metadata=_parse_metadata(metadata))
     stored_file = await _persist_upload(job, file)
-
     background_tasks.add_task(process_job, job.id, str(stored_file))
 
     status_url = str(request.url_for("get_job_status", job_id=job.id))
