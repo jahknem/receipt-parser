@@ -76,7 +76,14 @@ def test_async_flow_returns_completed_result(monkeypatch):
 
     result_response = client.get(f"/receipts/{job_id}")
     assert result_response.status_code == 200
-    assert result_response.json()["parsed"]["merchant"]["name"] == "Test Merchant"
+    parsed = result_response.json()["parsed"]
+    assert parsed["merchant"]["name"] == "Test Merchant"
+
+    # Check that decimal values are serialized as strings
+    assert parsed["items"][0]["qty"] == "1.00"
+    assert parsed["items"][0]["unit_price"] == "10.00"
+    assert parsed["items"][0]["total_price"] == "10.00"
+    assert parsed["totals"]["gross"] == "10.00"
 
 
 def test_metadata_validation_error(monkeypatch):
