@@ -31,50 +31,102 @@ The API will be available at `http://127.0.0.1:8000`.
 
 ## API Usage
 
-The primary endpoint for parsing receipts is `/parse-receipt/`.
+The API provides both **asynchronous** and **synchronous** receipt parsing endpoints.
 
-### Request
+### Async Flow (Default)
+
+Submit a receipt for background processing and poll for results.
+
+**1. Upload Receipt**
 
 -   **Method:** `POST`
--   **URL:** `/parse-receipt/`
--   **Body:** `multipart/form-data` with a single field named `file` containing the receipt image.
+-   **URL:** `/receipts`
+-   **Body:** `multipart/form-data` with:
+    -   `file`: receipt image (JPEG, PNG, or TIFF)
+    -   `metadata` (optional): JSON object with custom metadata
 
-**Example using `curl`:**
+**Example:**
 
 ```bash
-curl -X POST -F "file=@/path/to/your/receipt.jpg" http://127.0.0.1:8000/parse-receipt/
+curl -X POST -F "file=@receipt.jpg" \
+  -F 'metadata={"source":"mobile"}' \
+  http://127.0.0.1:8000/receipts
 ```
 
-### Response
-
-The API returns a JSON object representing the parsed invoice.
-
-**Example Response:**
+**Response (202 Accepted):**
 
 ```json
 {
-  "invoice_id": "...",
-  "merchant": {
-    "name": "...",
-    "address": "..."
-  },
-  "timestamp": "...",
-  "currency": "EUR",
-  "items": [
-    {
-      "description": "...",
-      "qty": 1.0,
-      "unit_price": 10.0,
-      "total_price": 10.0,
-      "vat_rate": 19
-    }
-  ],
-  "totals": {
-    "gross": 10.0,
-    "payment_method": "unknown"
-  },
-  "meta": {}
+  "job_id": "a1b2c3...",
+  "status_url": "http://127.0.0.1:8000/receipts/a1b2c3.../status",
+  "estimated_seconds": 5
 }
+```
+
+**2. Check Status**
+
+-   **Method:** `GET`
+-   **URL:** `/receipts/{job_id}/status`
+
+```bash
+curl http://127.0.0.1:8000/receipts/a1b2c3.../status
+```
+
+**3. Retrieve Result**
+
+-   **Method:** `GET`
+-   **URL:** `/receipts/{job_id}`
+
+```bash
+curl http://127.0.0.1:8000/receipts/a1b2c3...
+```
+
+**Response (200 OK when completed):**
+
+```json
+{
+  "job_id": "a1b2c3...",
+  "status": "completed",
+  "parsed": {
+    "invoice_id": "...",
+    "merchant": {
+      "name": "...",
+      "address": "..."
+    },
+    "timestamp": "...",
+    "currency": "EUR",
+    "items": [
+      {
+        "description": "...",
+        "qty": 1.0,
+        "unit_price": 10.0,
+        "total_price": 10.0,
+        "vat_rate": 19
+      }
+    ],
+    "totals": {
+      "gross": 10.0,
+      "payment_method": "unknown"
+    },
+    "meta": {}
+  },
+  "meta": {
+    "processing_time_seconds": 2.145,
+    "model_version": "donut-base-finetuned-cord-v2"
+  }
+}
+```
+
+### Sync Flow
+
+For immediate results, add `?sync=true` to the upload endpoint:
+
+```bash
+curl -X POST -F "file=@receipt.jpg" \
+  "http://127.0.0.1:8000/receipts?sync=true"
+```
+
+**Response (200 OK):** Returns the same completed job payload shown above
 ```
 
 ## Configuration
