@@ -8,6 +8,14 @@ from tests.fixtures_data import ALL_FIXTURES
 from tests import parser_stubs
 
 
+@pytest.fixture(autouse=True)
+def _reset_parser_cache():
+    """Reset the parser's model cache after each test run."""
+    yield
+    parser._processor = None
+    parser._model = None
+
+
 @pytest.mark.parametrize("fixture", ALL_FIXTURES)
 def test_parse_image_with_stubbed_pipeline_matches_fixture(monkeypatch, fixture):
     """Simulate the full Donut pipeline so we can assert parse_image against our fixtures."""

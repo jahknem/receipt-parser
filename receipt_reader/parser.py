@@ -1,23 +1,47 @@
 from __future__ import annotations
-from typing import Optional
-from .types import Invoice, Merchant, Item, Totals
-import torch
-from transformers import DonutProcessor, VisionEncoderDecoderModel
-from PIL import Image
+
 import json
 from decimal import Decimal
+from typing import Optional
 import uuid
+
+from PIL import Image
+
+from .types import Invoice, Item, Merchant, Totals
+
+_processor = None
+_model = None
+
+
+def _get_model():
+    """
+    Lazily loads and caches the ML model and processor.
+    """
+    global _processor, _model
+    if _processor is None or _model is None:
+        try:
+            import torch
+            from transformers import DonutProcessor, VisionEncoderDecoderModel
+        except ImportError as exc:
+            raise ImportError(
+                "ML dependencies are not installed. Please install them with "
+                "'pip install torch transformers sentencepiece'"
+            ) from exc
+
+        _processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
+        _model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        _model.to(device)
+
+    return _processor, _model
+
 
 def parse_image(path: str, *, lang: str = "deu") -> Invoice:
     """
     Parses a receipt image and returns an Invoice object.
     """
-    # Load model and processor
-    processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
-    model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model.to(device)
+    processor, model = _get_model()
 
     # Load image
     image = Image.open(path).convert("RGB")
@@ -29,10 +53,15 @@ def parse_image(path: str, *, lang: str = "deu") -> Invoice:
     # Process image
     pixel_values = processor(image, return_tensors="pt").pixel_values
 
+    # Move tensors to the same device as the model
+    device = model.parameters()[0].device
+    pixel_values = pixel_values.to(device)
+    decoder_input_ids = decoder_input_ids.to(device)
+
     # Generate output
     outputs = model.generate(
-        pixel_values.to(device),
-        decoder_input_ids=decoder_input_ids.to(device),
+        pixel_values,
+        decoder_input_ids=decoder_input_ids,
         max_length=model.decoder.config.max_position_embeddings,
         pad_token_id=processor.tokenizer.pad_token_id,
         eos_token_id=processor.tokenizer.eos_token_id,
@@ -77,12 +106,11 @@ def parse_image(path: str, *, lang: str = "deu") -> Invoice:
                     qty=qty,
                     unit_price=unit_price,
                     total_price=qty * unit_price,
-                    vat_rate=19 # Defaulting to 19, as the model doesn't provide this
+                    vat_rate=19,  # Defaulting to 19, as the model doesn't provide this
                 )
             )
         except (KeyError, TypeError, ValueError):
             continue
-
 
     totals = Totals(
         gross=Decimal(data.get("total", {}).get("price", {}).get("value", "0")),
