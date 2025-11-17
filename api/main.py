@@ -11,6 +11,7 @@ from fastapi import (
     HTTPException,
     Query,
     Request,
+    Response,
     UploadFile,
     status,
 )
@@ -90,6 +91,7 @@ def process_job(job_id: str, file_path: str) -> None:
 @app.post("/receipts", status_code=status.HTTP_202_ACCEPTED)
 async def upload_receipt(
     request: Request,
+    response: Response,
     background_tasks: BackgroundTasks,
     sync: bool = Query(False, description="Attempt synchronous parsing"),
     file: UploadFile = File(...),
@@ -108,6 +110,7 @@ async def upload_receipt(
             job_store.mark_failed(job.id, error=str(exc))
             stored_file.unlink(missing_ok=True)
             raise HTTPException(status_code=422, detail=str(exc))
+        response.status_code = status.HTTP_200_OK
         return _job_result_payload(job)
 
     background_tasks.add_task(process_job, job.id, str(stored_file))

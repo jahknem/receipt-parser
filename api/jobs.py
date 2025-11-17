@@ -67,4 +67,3 @@ def timed(fn, *args, **kwargs):
     value = fn(*args, **kwargs)
     duration = perf_counter() - start
     return value, duration
-*** End of File
