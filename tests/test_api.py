@@ -119,3 +119,18 @@ def test_failed_job_returns_error(monkeypatch):
 def test_unknown_job_returns_404():
     assert client.get("/receipts/missing/status").status_code == 404
     assert client.get("/receipts/missing").status_code == 404
+
+
+def test_sync_parse_returns_completed_result(monkeypatch):
+    monkeypatch.setattr(main, "parse_image", lambda path: sample_invoice())
+
+    response = client.post(
+        "/receipts/parse",
+        files=_file_payload(),
+    )
+
+    assert response.status_code == 200
+    parsed = response.json()["parsed"]
+    assert parsed["merchant"]["name"] == "Test Merchant"
+    assert parsed["items"][0]["qty"] == "1.00"
+    assert parsed["totals"]["gross"] == "10.00"

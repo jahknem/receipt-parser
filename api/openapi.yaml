@@ -72,6 +72,40 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "422":
           $ref: '#/components/responses/Unparsable'
+  /receipts/parse:
+    post:
+      tags: [receipts]
+      summary: Upload a receipt image for synchronous parsing
+      description: |
+        Accepts an image file (multipart) and returns the parse result directly.
+      operationId: parseReceiptSync
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+            encoding:
+              file:
+                contentType: "image/png, image/jpeg, image/tiff"
+      responses:
+        "200":
+          description: Synchronous parse result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseResult'
+              examples:
+                parseResult:
+                  $ref: '#/components/examples/ParseResultExample'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "422":
+          $ref: '#/components/responses/Unparsable'
   /receipts/{job_id}/status:
     get:
       tags: [receipts]

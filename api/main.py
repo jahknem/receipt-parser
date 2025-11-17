@@ -106,6 +106,15 @@ async def upload_receipt(
     return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=body, headers=headers)
 
 
+@app.post("/receipts/parse")
+async def parse_receipt_sync(file: UploadFile = File(...)):
+    job = job_store.create()
+    stored_file = await _persist_upload(job, file)
+    process_job(job.id, str(stored_file))
+    job = job_store.get(job.id)
+    return _job_result_payload(job)
+
+
 @app.get("/receipts/{job_id}/status")
 def get_job_status(job_id: str):
     job = job_store.get(job_id)
