@@ -91,27 +91,12 @@ def process_job(job_id: str, file_path: str) -> None:
 @app.post("/receipts", status_code=status.HTTP_202_ACCEPTED)
 async def upload_receipt(
     request: Request,
-    response: Response,
     background_tasks: BackgroundTasks,
-    sync: bool = Query(False, description="Attempt synchronous parsing"),
     file: UploadFile = File(...),
     metadata: Optional[str] = Form(None),
 ):
     job = job_store.create(metadata=_parse_metadata(metadata))
     stored_file = await _persist_upload(job, file)
-
-    if sync:
-        job_store.mark_processing(job.id)
-        try:
-            invoice, duration = timed(parse_image, str(stored_file))
-            job_store.mark_completed(job.id, invoice=invoice, duration=duration)
-            stored_file.unlink(missing_ok=True)
-        except Exception as exc:
-            job_store.mark_failed(job.id, error=str(exc))
-            stored_file.unlink(missing_ok=True)
-            raise HTTPException(status_code=422, detail=str(exc))
-        response.status_code = status.HTTP_200_OK
-        return _job_result_payload(job)
 
     background_tasks.add_task(process_job, job.id, str(stored_file))
 

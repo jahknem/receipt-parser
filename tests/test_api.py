@@ -79,21 +79,6 @@ def test_async_flow_returns_completed_result(monkeypatch):
     assert result_response.json()["parsed"]["merchant"]["name"] == "Test Merchant"
 
 
-def test_sync_flow_returns_parse_result(monkeypatch):
-    monkeypatch.setattr(main, "parse_image", lambda path: sample_invoice())
-
-    response = client.post(
-        "/receipts",
-        params={"sync": "true"},
-        files=_file_payload(),
-    )
-
-    assert response.status_code == 200
-    body = response.json()
-    assert body["status"] == "completed"
-    assert body["parsed"]["merchant"]["name"] == "Test Merchant"
-
-
 def test_metadata_validation_error(monkeypatch):
     monkeypatch.setattr(main, "parse_image", lambda path: sample_invoice())
 

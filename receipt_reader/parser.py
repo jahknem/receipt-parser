@@ -53,6 +53,11 @@ def parse_image(path: str, *, lang: str = "deu") -> Invoice:
     # Process image
     pixel_values = processor(image, return_tensors="pt").pixel_values
 
+    # Move tensors to the same device as the model
+    device = model.parameters()[0].device
+    pixel_values = pixel_values.to(device)
+    decoder_input_ids = decoder_input_ids.to(device)
+
     # Generate output
     outputs = model.generate(
         pixel_values,

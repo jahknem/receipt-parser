@@ -72,6 +72,9 @@ def stub_donut_pipeline(monkeypatch, *, raw_sequence: str) -> None:
         def generate(self, *args, **kwargs):
             return SimpleNamespace(sequences=["unused"])
 
+        def parameters(self):
+            return [SimpleNamespace(device="cpu")]
+
     monkeypatch.setattr("transformers.DonutProcessor", _FakeProcessor)
     monkeypatch.setattr("transformers.VisionEncoderDecoderModel", _FakeModel)
     monkeypatch.setattr("PIL.Image.open", lambda _: SimpleNamespace(convert=lambda _: None))

@@ -1,5 +1,6 @@
 
 import sys
+import time
 from unittest.mock import MagicMock
 
 import pytest
@@ -28,7 +29,18 @@ def test_upload_receipt_without_model_dependencies(monkeypatch):
     parser._model = None
 
     with open("tests/rewe.png", "rb") as f:
-        response = client.post("/receipts?sync=true", files={"file": ("rewe.png", f, "image/png")})
+        response = client.post("/receipts", files={"file": ("rewe.png", f, "image/png")})
 
-    assert response.status_code == 422
-    assert "ML dependencies are not installed" in response.text
+    assert response.status_code == 202
+    job_id = response.json()["job_id"]
+
+    # Poll for job completion
+    for _ in range(10):
+        time.sleep(0.1)
+        status_response = client.get(f"/receipts/{job_id}/status")
+        if status_response.json()["status"] in ("completed", "failed"):
+            break
+
+    result_response = client.get(f"/receipts/{job_id}")
+    assert result_response.status_code == 500
+    assert "ML dependencies are not installed" in result_response.text
