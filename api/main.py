@@ -1,52 +1,144 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+import json
+import tempfile
+from pathlib import Path
+from typing import Optional
+
+from fastapi import (
+    BackgroundTasks,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    status,
+)
+from fastapi.responses import JSONResponse
+
 from receipt_reader.parser import parse_image
-import uuid
-import os
-import threading
-from typing import Dict
+
+from .jobs import Job, JobStore, timed
+
+ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/jpg", "image/tiff"}
+UPLOADS_DIR = Path(tempfile.gettempdir()) / "receipt-parser"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI()
+job_store = JobStore()
 
-jobs: Dict[str, Dict] = {}
+
+def _validate_content_type(upload: UploadFile) -> None:
+    if upload.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG or TIFF are supported.")
 
 
-def process_receipt(receipt_id: str, temp_file_path: str):
+async def _persist_upload(job: Job, upload: UploadFile) -> Path:
+    _validate_content_type(upload)
+    suffix = Path(upload.filename or "receipt").suffix or ".png"
+    destination = UPLOADS_DIR / f"{job.id}{suffix}"
+    data = await upload.read()
+    with destination.open("wb") as fh:
+        fh.write(data)
+    upload.file.close()
+    return destination
+
+
+def _parse_metadata(raw: Optional[str]) -> Optional[dict]:
+    if raw in (None, ""):
+        return None
     try:
-        invoice_data = parse_image(temp_file_path)
-        jobs[receipt_id]["status"] = "completed"
-        jobs[receipt_id]["result"] = invoice_data.dict()
-    except Exception as e:
-        jobs[receipt_id]["status"] = "failed"
-        jobs[receipt_id]["error"] = str(e)
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="metadata must be valid JSON") from exc
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=400, detail="metadata must be a JSON object")
+    return parsed
+
+
+def _job_status_payload(job: Job) -> dict:
+    payload = {"job_id": job.id, "status": job.status}
+    if job.error:
+        payload["error"] = job.error
+    return payload
+
+
+def _job_result_payload(job: Job) -> dict:
+    assert job.result is not None, "job.result expected for completed jobs"
+    return {
+        "job_id": job.id,
+        "status": "completed",
+        "parsed": job.result.dict(),
+        "meta": {
+            "processing_time_seconds": round(job.duration_seconds or 0.0, 3),
+            "model_version": "donut-base-finetuned-cord-v2",
+        },
+    }
+
+
+def process_job(job_id: str, file_path: str) -> None:
+    job_store.mark_processing(job_id)
+    try:
+        invoice, duration = timed(parse_image, file_path)
+        job_store.mark_completed(job_id, invoice=invoice, duration=duration)
+    except Exception as exc:  # pragma: no cover - defensive guard
+        job_store.mark_failed(job_id, error=str(exc))
     finally:
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+        Path(file_path).unlink(missing_ok=True)
 
 
-@app.post("/receipts")
-async def create_receipt(file: UploadFile = File(...)):
-    if file.content_type not in ["image/jpeg", "image/png"]:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are supported.")
+@app.post("/receipts", status_code=status.HTTP_202_ACCEPTED)
+async def upload_receipt(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    sync: bool = Query(False, description="Attempt synchronous parsing"),
+    file: UploadFile = File(...),
+    metadata: Optional[str] = Form(None),
+):
+    job = job_store.create(metadata=_parse_metadata(metadata))
+    stored_file = await _persist_upload(job, file)
 
-    file_extension = file.filename.split(".")[-1]
-    receipt_id = str(uuid.uuid4())
-    temp_file_path = f"/tmp/{receipt_id}.{file_extension}"
+    if sync:
+        job_store.mark_processing(job.id)
+        try:
+            invoice, duration = timed(parse_image, str(stored_file))
+            job_store.mark_completed(job.id, invoice=invoice, duration=duration)
+            stored_file.unlink(missing_ok=True)
+        except Exception as exc:
+            job_store.mark_failed(job.id, error=str(exc))
+            stored_file.unlink(missing_ok=True)
+            raise HTTPException(status_code=422, detail=str(exc))
+        return _job_result_payload(job)
 
-    with open(temp_file_path, "wb") as buffer:
-        buffer.write(await file.read())
+    background_tasks.add_task(process_job, job.id, str(stored_file))
 
-    jobs[receipt_id] = {"status": "pending"}
-
-    thread = threading.Thread(target=process_receipt, args=(receipt_id, temp_file_path))
-    thread.start()
-
-    return {"receipt_id": receipt_id}
+    status_url = str(request.url_for("get_job_status", job_id=job.id))
+    result_url = str(request.url_for("get_job_result", job_id=job.id))
+    headers = {"Location": result_url}
+    body = {"job_id": job.id, "status_url": status_url, "estimated_seconds": 5}
+    return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=body, headers=headers)
 
 
-@app.get("/receipts/{receipt_id}")
-async def get_receipt(receipt_id: str):
-    job = jobs.get(receipt_id)
+@app.get("/receipts/{job_id}/status")
+def get_job_status(job_id: str):
+    job = job_store.get(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Receipt not found")
+        raise HTTPException(status_code=404, detail="Job not found")
+    return _job_status_payload(job)
 
-    return job
+
+@app.get("/receipts/{job_id}")
+def get_job_result(job_id: str):
+    job = job_store.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    if job.status == "completed":
+        return _job_result_payload(job)
+    if job.status == "failed":
+        raise HTTPException(status_code=500, detail=job.error or "Parsing failed")
+
+    return JSONResponse(
+        status_code=status.HTTP_202_ACCEPTED,
+        content=_job_status_payload(job),
+    )
