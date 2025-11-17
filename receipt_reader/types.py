@@ -5,9 +5,9 @@ from pydantic import BaseModel, Field, validator
 
 
 def _D(x) -> Decimal:
-    if isinstance(x, Decimal):
-        return x
-    return Decimal(str(x)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if not isinstance(x, Decimal):
+        x = Decimal(str(x))
+    return x.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 class Merchant(BaseModel):
