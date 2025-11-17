@@ -31,8 +31,8 @@ def test_upload_receipt_without_model_dependencies(monkeypatch):
     with open("tests/rewe.png", "rb") as f:
         response = client.post("/receipts", files={"file": ("rewe.png", f, "image/png")})
 
-    # Poll for job completion/failure. BackgroundTasks run in TestClient so this should complete quickly.
-    import time
+    assert response.status_code == 202
+    job_id = response.json()["job_id"]
 
     for _ in range(20):
         r = client.get(f"/receipts/{job_id}")
