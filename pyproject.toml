@@ -15,6 +15,7 @@ protobuf = "*"
 fastapi = "*"
 uvicorn = "*"
 python-multipart = "*"
+slowapi = "^0.1.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
