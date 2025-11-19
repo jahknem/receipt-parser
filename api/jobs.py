@@ -65,6 +65,7 @@ class JobStore:
     def reset(self) -> None:
         with self._lock:
             self._jobs.clear()
+            job_queue_depth.set(0)
 
 
 def timed(fn, *args, **kwargs):

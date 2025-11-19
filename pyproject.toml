@@ -6,8 +6,6 @@ authors = ["<you>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-torch = "*"
-transformers = "*"
 Pillow = "*"
 pydantic = "^1.10"
 sentencepiece = "*"
@@ -29,6 +27,10 @@ httpx = "*"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.model.dependencies]
+torch = "*"
+transformers = "*"
 
 [dependency-groups]
 dev = [

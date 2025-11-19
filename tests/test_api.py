@@ -119,3 +119,20 @@ def test_failed_job_returns_error(monkeypatch):
 def test_unknown_job_returns_404():
     assert client.get("/receipts/missing/status").status_code == 404
     assert client.get("/receipts/missing").status_code == 404
+
+
+def test_correlation_id_header_is_present():
+    response = client.post("/receipts", files=_file_payload())
+    assert "X-Correlation-ID" in response.headers
+
+
+def test_correlation_id_is_bound_to_logger(monkeypatch):
+    from unittest.mock import MagicMock
+
+    mock_logger = MagicMock()
+    monkeypatch.setattr(main, "log", mock_logger)
+
+    response = client.post("/receipts", files=_file_payload())
+    assert "X-Correlation-ID" in response.headers
+    correlation_id = response.headers["X-Correlation-ID"]
+    mock_logger.bind.assert_called_with(correlation_id=correlation_id)

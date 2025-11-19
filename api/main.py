@@ -50,7 +50,7 @@ log = structlog.get_logger()
 async def add_correlation_id(request: Request, call_next):
     correlation_id = str(uuid.uuid4())
     request.state.correlation_id = correlation_id
-    log.bind(correlation_id=correlation_id)
+    request.state.logger = log.bind(correlation_id=correlation_id)
     response = await call_next(request)
     response.headers["X-Correlation-ID"] = correlation_id
     return response
@@ -122,7 +122,7 @@ async def upload_receipt(
     file: UploadFile = File(...),
     metadata: Optional[str] = Form(None),
 ):
-    log.info(
+    request.state.logger.info(
         "upload_receipt",
         filename=file.filename,
         content_type=file.content_type,
@@ -140,8 +140,8 @@ async def upload_receipt(
 
 
 @app.get("/receipts/{job_id}/status")
-def get_job_status(job_id: str):
-    log.info("get_job_status", job_id=job_id)
+def get_job_status(request: Request, job_id: str):
+    request.state.logger.info("get_job_status", job_id=job_id)
     job = job_store.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -149,8 +149,8 @@ def get_job_status(job_id: str):
 
 
 @app.get("/receipts/{job_id}")
-def get_job_result(job_id: str):
-    log.info("get_job_result", job_id=job_id)
+def get_job_result(request: Request, job_id: str):
+    request.state.logger.info("get_job_result", job_id=job_id)
     job = job_store.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
