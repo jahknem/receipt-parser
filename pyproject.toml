@@ -20,7 +20,7 @@ opentelemetry-distro = "*"
 opentelemetry-instrumentation-fastapi = "*"
 slowapi = "^0.1.9"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
 pytest-mock = "^3.10.0"
 httpx = "*"
@@ -33,7 +33,4 @@ build-backend = "poetry.core.masonry.api"
 torch = "*"
 transformers = "*"
 
-[dependency-groups]
-dev = [
-    "httpx (>=0.28.1,<0.29.0)"
-]
+
