@@ -2,7 +2,8 @@
 name = "receipt-parser"
 version = "0.0.0"
 description = "Receipt parsing helpers and fixtures for tests"
-authors = ["<you>"]
+authors = ["Jan <jan@example.com>"]
+packages = [{include = "receipt_reader"}, {include = "api"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
@@ -17,7 +18,7 @@ prometheus-fastapi-instrumentator = "*"
 structlog = "*"
 opentelemetry-distro = "*"
 opentelemetry-instrumentation-fastapi = "*"
-pytest = "^9.0.1"
+slowapi = "^0.1.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"

@@ -20,9 +20,13 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from receipt_reader.parser import parse_image
 
+from .config import MAX_FILE_SIZE_BYTES, RATE_LIMIT
 from .jobs import Job, JobStore, timed
 from .logging import setup_logging
 from .metrics import instrumentator
@@ -31,7 +35,6 @@ ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/jpg", "image/tiff"}
 UPLOADS_DIR = Path(tempfile.gettempdir()) / "receipt-parser"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
@@ -39,7 +42,10 @@ async def lifespan(app: FastAPI):
     yield
 
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 instrumentator.instrument(app)
 instrumentator.expose(app)
 job_store = JobStore()
@@ -65,9 +71,17 @@ async def _persist_upload(job: Job, upload: UploadFile) -> Path:
     _validate_content_type(upload)
     suffix = Path(upload.filename or "receipt").suffix or ".png"
     destination = UPLOADS_DIR / f"{job.id}{suffix}"
-    data = await upload.read()
+    written_bytes = 0
     with destination.open("wb") as fh:
-        fh.write(data)
+        while chunk := await upload.read(4096):
+            written_bytes += len(chunk)
+            if written_bytes > MAX_FILE_SIZE_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                    detail=f"Maximum file size of {MAX_FILE_SIZE_BYTES/1024/1024:.2f}MB exceeded",
+                )
+            fh.write(chunk)
+
     upload.file.close()
     return destination
 
@@ -116,6 +130,7 @@ def process_job(job_id: str, file_path: str) -> None:
 
 
 @app.post("/receipts", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit(RATE_LIMIT)
 async def upload_receipt(
     request: Request,
     background_tasks: BackgroundTasks,

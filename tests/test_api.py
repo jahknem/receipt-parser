@@ -14,6 +14,7 @@ client = TestClient(main.app)
 @pytest.fixture(autouse=True)
 def reset_state(monkeypatch, tmp_path):
     main.job_store.reset()
+    main.limiter._storage.reset()
     monkeypatch.setattr(main, "UPLOADS_DIR", tmp_path)
     main.UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     yield
@@ -136,3 +137,24 @@ def test_correlation_id_is_bound_to_logger(monkeypatch):
     assert "X-Correlation-ID" in response.headers
     correlation_id = response.headers["X-Correlation-ID"]
     mock_logger.bind.assert_called_with(correlation_id=correlation_id)
+
+
+def test_file_size_limit_exceeded(monkeypatch):
+    monkeypatch.setattr(main, "MAX_FILE_SIZE_BYTES", 10)
+    response = client.post(
+        "/receipts",
+        files={"file": ("receipt.png", b"this is more than 10 bytes", "image/png")},
+    )
+    assert response.status_code == 413
+    assert "Maximum file size" in response.json()["detail"]
+
+
+def test_rate_limit_exceeded(monkeypatch):
+    monkeypatch.setattr(main, "parse_image", lambda path: sample_invoice())
+    main.limiter.enabled = True
+    for _ in range(15):
+        response = client.post("/receipts", files=_file_payload())
+        assert response.status_code == 202
+    response = client.post("/receipts", files=_file_payload())
+    assert response.status_code == 429
+    main.limiter.enabled = False
