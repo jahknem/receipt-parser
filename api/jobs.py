@@ -13,6 +13,9 @@ from .metrics import job_queue_depth
 JobStatus = Literal["queued", "processing", "completed", "failed"]
 
 
+from pathlib import Path
+
+
 @dataclass
 class Job:
     id: str = field(default_factory=lambda: str(uuid4()))
@@ -21,6 +24,7 @@ class Job:
     error: Optional[str] = None
     metadata: Optional[dict] = None
     duration_seconds: Optional[float] = None
+    source_path: Optional[Path] = None
 
 
 class JobStore:
