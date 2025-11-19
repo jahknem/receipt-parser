@@ -18,10 +18,11 @@ from fastapi.responses import JSONResponse
 from receipt_reader.parser import parse_image
 
 from .jobs import Job, JobStore, timed
-from .storage import storage_service
+from .storage import get_storage_service
 
 app = FastAPI()
 job_store = JobStore()
+storage_service = get_storage_service()
 
 
 def _parse_metadata(raw: Optional[str]) -> Optional[dict]:
