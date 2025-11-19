@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt Camera Capture</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="camera-container">
+        <video id="camera-preview" autoplay playsinline></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <div id="controls">
+            <button id="capture-btn">Capture</button>
+            <button id="switch-camera-btn">Switch Camera</button>
+        </div>
+    </div>
+    <div id="confirmation-container" style="display:none;">
+        <img id="captured-image" src="" alt="Captured receipt">
+        <div id="confirmation-controls">
+            <button id="retake-btn">Retake</button>
+            <button id="use-photo-btn">Use Photo</button>
+        </div>
+    </div>
+    <div id="error-container" style="display:none;">
+        <p id="error-message"></p>
+    </div>
+    <div id="fallback-container" style="display:none;">
+        <p>Alternatively, you can upload a file:</p>
+        <input type="file" id="file-input" accept="image/*">
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
