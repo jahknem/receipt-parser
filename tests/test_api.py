@@ -6,19 +6,26 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import main
+from api import config
+from api.storage import StorageService
 from receipt_reader.types import Invoice, Item, Merchant, Totals
 
 client = TestClient(main.app)
 
 
-from api import config
-
-
 @pytest.fixture(autouse=True)
 def reset_state(monkeypatch, tmp_path):
     main.job_store.reset()
+    main.limiter._storage.reset()
+    
+    # Patch config and update storage service
     monkeypatch.setattr(config, "UPLOADS_DIR", tmp_path)
     config.UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Re-create storage service with patched config
+    new_storage = StorageService(tmp_path)
+    monkeypatch.setattr(main, "storage_service", new_storage)
+    
     yield
     main.job_store.reset()
 
@@ -130,7 +137,20 @@ def test_invalid_content_type_returns_400():
 
 
 def test_oversized_file_returns_413(monkeypatch):
+    # Patch config.MAX_FILE_SIZE_BYTES (which MAX_FILE_SIZE aliases)
+    monkeypatch.setattr(config, "MAX_FILE_SIZE_BYTES", 1)
+    # Also need to update storage service because it might have captured the old value?
+    # No, storage service reads config.MAX_FILE_SIZE at runtime in _stream_to_disk?
+    # Let's check api/storage.py again.
+    # It uses config.MAX_FILE_SIZE in _stream_to_disk.
+    # So patching config should work if we patch the right symbol.
+    # Since I aliased MAX_FILE_SIZE = MAX_FILE_SIZE_BYTES in config.py,
+    # patching MAX_FILE_SIZE_BYTES might not affect MAX_FILE_SIZE if it was imported/assigned by value?
+    # In config.py: MAX_FILE_SIZE = MAX_FILE_SIZE_BYTES.
+    # If we patch MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE (int) remains unchanged.
+    # So we must patch MAX_FILE_SIZE directly or patch both.
     monkeypatch.setattr(config, "MAX_FILE_SIZE", 1)
+    
     response = client.post("/receipts", files=_file_payload())
     assert response.status_code == 413
 
@@ -144,3 +164,31 @@ def test_successful_job_cleans_up_file(monkeypatch):
 
     job = main.job_store.get(job_id)
     assert not job.source_path.exists()
+
+
+def test_correlation_id_header_is_present():
+    response = client.post("/receipts", files=_file_payload())
+    assert "X-Correlation-ID" in response.headers
+
+
+def test_correlation_id_is_bound_to_logger(monkeypatch):
+    from unittest.mock import MagicMock
+
+    mock_logger = MagicMock()
+    monkeypatch.setattr(main, "log", mock_logger)
+
+    response = client.post("/receipts", files=_file_payload())
+    assert "X-Correlation-ID" in response.headers
+    correlation_id = response.headers["X-Correlation-ID"]
+    mock_logger.bind.assert_called_with(correlation_id=correlation_id)
+
+
+def test_rate_limit_exceeded(monkeypatch):
+    monkeypatch.setattr(main, "parse_image", lambda path: sample_invoice())
+    main.limiter.enabled = True
+    for _ in range(15):
+        response = client.post("/receipts", files=_file_payload())
+        assert response.status_code == 202
+    response = client.post("/receipts", files=_file_payload())
+    assert response.status_code == 429
+    main.limiter.enabled = False

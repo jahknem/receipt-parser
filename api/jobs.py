@@ -8,6 +8,8 @@ from uuid import uuid4
 
 from receipt_reader.types import Invoice
 
+from .metrics import job_queue_depth
+
 JobStatus = Literal["queued", "processing", "completed", "failed"]
 
 
@@ -34,6 +36,7 @@ class JobStore:
         job = Job(metadata=metadata)
         with self._lock:
             self._jobs[job.id] = job
+            job_queue_depth.inc()
         return job
 
     def get(self, job_id: str) -> Optional[Job]:
@@ -44,6 +47,7 @@ class JobStore:
         with self._lock:
             job = self._jobs[job_id]
             job.status = "processing"
+            job_queue_depth.dec()
             return job
 
     def mark_completed(self, job_id: str, *, invoice: Invoice, duration: float) -> Job:
@@ -59,11 +63,13 @@ class JobStore:
             job = self._jobs[job_id]
             job.status = "failed"
             job.error = error
+            job_queue_depth.dec()
             return job
 
     def reset(self) -> None:
         with self._lock:
             self._jobs.clear()
+            job_queue_depth.set(0)
 
 
 def timed(fn, *args, **kwargs):
