@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt Parser</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Receipt Parser</h1>
+    <div class="container">
+        <div class="upload-container">
+            <input type="file" id="file-input" accept="image/*">
+            <label for="file-input" class="file-label">Choose a receipt image</label>
+            <button id="upload-btn" disabled>Upload</button>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div id="status"></div>
+            <button id="cancel-btn" style="display: none;">Cancel</button>
+            <button id="retry-btn" style="display: none;">Retry</button>
+        </div>
+        <div class="result-container" id="result-container">
+            <h2>Result</h2>
+            <pre id="result"></pre>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

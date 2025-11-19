@@ -20,6 +20,7 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -156,3 +157,6 @@ def get_job_result(request: Request, job_id: str):
         status_code=status.HTTP_202_ACCEPTED,
         content=_job_status_payload(job),
     )
+
+
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
