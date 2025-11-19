@@ -28,7 +28,11 @@ jobs:
             ${{ runner.os }}-poetry-
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          # Ensure the lock file is consistent with pyproject.toml in CI
+          # regenerate the lockfile if pyproject changed since the committed lock.
+          poetry lock
+          poetry install --no-interaction --no-ansi
 
       - name: Run tests
         run: poetry run pytest
