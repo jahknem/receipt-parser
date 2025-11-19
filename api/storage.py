@@ -42,4 +42,6 @@ class StorageService:
                     )
                 fh.write(chunk)
 
-storage_service = StorageService(config.UPLOADS_DIR)
+def get_storage_service() -> StorageService:
+    """Factory to create a StorageService with the latest config."""
+    return StorageService(config.UPLOADS_DIR)
