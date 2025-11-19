@@ -22,11 +22,14 @@ async function startCamera(facingMode = 'environment') {
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Camera API not supported in this browser');
+        }
+
         stream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: {
-                    exact: facingMode
-                }
+                facingMode: facingMode
             }
         });
         cameraPreview.srcObject = stream;
